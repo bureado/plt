@@ -1,0 +1,37 @@
+#!/bin/sh
+
+echo "Pedestrian LDAP Tester -- common usage pattern"
+echo "  (C) 2008 José Miguel Parrella Romero <jparrella@onuva.com>"
+echo "  Released as free software under the same terms of Perl."
+echo ""
+echo "  WARNING! This script will proceed to destroy your LDAP database"
+echo "           load a new LDIF, index it and start OpenLDAP.         "
+echo ""
+echo "  ARE YOU SURE YOU WANT TO CONTINUE? [Y/n]"
+read VAR
+
+if [ "$VAR" == "Y" ]
+then
+
+  time { 
+    invoke-rc.d slapd stop ;
+    rm -rf /var/lib/ldap/* ;
+    ./plt-ldif-generator 1000 > plt-1k-ldif.ldif ;
+    slapadd < plt-1k-ldif.ldif ;
+    slapindex ;
+    chown -R openldap.openldap /var/lib/ldap/* ;
+    invoke-rc.d slapd start ;
+  }
+
+  echo "  Above you'll see times for the remove-generate-add operation."
+  echo "  Now we'll simulate 100 concurrent connections to the database."
+
+  time {
+    ./plt-bambam
+  }
+
+  echo "  END OF TESTS, EXITING."
+
+else
+  echo "  ABORTING!"
+fi

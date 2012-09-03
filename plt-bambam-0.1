@@ -1,0 +1,51 @@
+#!/usr/bin/env perl
+
+#
+# plt-bambam.pl -- part of the Pedestrian LDAP Tester
+#   (C) 2008 José Miguel Parrella Romero <jparrella@onuva.com>
+#
+# This is free software, released under the terms of Perl itself.
+#
+
+use strict;
+
+use Net::LDAP;
+
+use threads;
+use threads::shared;
+
+$|=1;
+
+my @threads;
+
+#
+# CONFIGURATION
+#
+
+my $server = "localhost";              # LDAP server to bang
+my $count = 100;                       # How many threads?
+my $base = "dc=onuva,dc=com";          # LDAP base
+my $filter = "(&(sn=Parrella))";       # LDAP filter to be searched for
+my @attrs = qw/sn cn givenName mail/;  # LDAP attributes to be retrieved
+
+#
+# END OF CONFIGURATION
+#
+
+my $ldap = Net::LDAP->new( $server ) or die "$@";
+my $mesg = $ldap->bind;
+
+while ( $count ) {
+  push(@threads, threads->new(\&query));
+  --$count;
+}
+
+foreach my $thread (@threads) {
+  $thread->join();
+}
+
+sub query {
+  $mesg = $ldap->search( base => $base, filter => $filter, attrs => @attrs, );
+}
+
+$ldap->unbind;

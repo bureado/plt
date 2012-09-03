@@ -1,0 +1,60 @@
+#!/usr/bin/perl
+
+#
+# plt-ldif-generator.pl -- part of the Pedestrian LDAP Tester
+#   (C) 2008 José Miguel Parrella Romero <jparrella@onuva.com>
+#
+# This is free software, released under the terms of Perl itself.
+#
+
+use strict;
+
+#
+# CONFIGURATION
+#
+
+my $counter = defined $ARGV[0] ? $ARGV[0] : 200000;   # How many entries in the resulting LDIF?
+
+my @names = qw/Julio José Marco Pedro Alberto Juan Luis Carlos Mario Yonel Kevin Eduardo Pablo Gerardo Reinaldo Ricardo Jesús Gustavo Nelson Daniel/;
+my @surnames = qw/Gómez García Pérez Martínez Rodríguez González Filippi Parrella Santaella Zambrano Ortega Meza Zerpa Chávez Romero Antoni/;
+
+#
+# END OF CONFIGURATION
+#
+
+open ( ROOT, "root.ldif" );
+  print while ( <ROOT> );
+close ROOT;
+
+while ( 1 ) {
+
+  foreach my $name ( @names ) {
+
+    foreach my $surname ( @surnames ) {
+
+      open ( MODEL, "model.ldif" );
+
+      while ( <MODEL> ) {
+
+        s/#FN#/$name/g;
+	s/#SN#/$surname/g;
+	s/#CN#/$name $surname $counter/g;
+
+	my $user = lc $surname;
+	s/#USER#/$user/;
+
+	print $_;
+
+      }
+
+      print "\n";
+      close MODEL;
+
+      --$counter;
+      exit if not $counter;
+
+    }
+
+  }
+
+}
